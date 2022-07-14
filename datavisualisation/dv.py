@@ -1,16 +1,14 @@
+import os
+import time
+import webbrowser
+
 import requests
 import json
 import folium
 import xml.etree.ElementTree as ET
 
-json_map = folium.Map(
-    location=[34.825830, 18.359418],
-    zoom_start=2,
-    max_bounds=True,
-    min_zoom=2,
-    width='100%',
-    height='100%'
-)
+opn = True
+
 title_json = '''
 <h3 align="center" style="font-size:16px">JSON map</h3>
 '''
@@ -19,16 +17,9 @@ title_xml = '''
 <h3 align="center" style="font-size:16px">XML map</h3>
 '''
 
-xml_map = folium.Map(
-    location=[34.825830, 18.359418],
-    zoom_start=2,
-    max_bounds=True,
-    min_zoom=2,
-    width='100%',
-    height='100%'
-)
+reload = "<script>setTimeout(function(){window.location.reload(1);}, 10000);</script>"
 
-url = "http://127.0.0.1:5000/apiv3/getSpoofData"
+url = "http://127.0.0.1:5000/apiv3/spoof"
 
 headers_json = {
     'Content-Type': 'application/json'
@@ -38,6 +29,16 @@ headers_xml = {
     'Content-Type': 'application/xml'
 }
 
+def createMap():
+    m = folium.Map(
+        location=[34.825830, 18.359418],
+        zoom_start=2,
+        max_bounds=True,
+        min_zoom=2,
+        width='100%',
+        height='100%'
+    )
+    return m
 
 def getAllSpoofData():
     get_spoof_data_payload_xml = "<root>\r\n    " \
@@ -130,10 +131,21 @@ def addMarkerXml(lat, long, time):
     ).add_to(xml_map)
 
 
-displayAllShips()
-
-json_map.get_root().html.add_child(folium.Element(title_json))
-json_map.save('json_map.html')
-
-xml_map.get_root().html.add_child(folium.Element(title_xml))
-xml_map.save('xml_map.html')
+# Create a while loop that runs once every 10 seconds
+while True:
+    json_map = createMap()
+    xml_map = createMap()
+    displayAllShips()
+    json_map.get_root().html.add_child(folium.Element(title_json))
+    json_map.get_root().header.add_child(folium.Element(reload))
+    json_map.save('json_map.html')
+    xml_map.get_root().html.add_child(folium.Element(title_xml))
+    xml_map.get_root().header.add_child(folium.Element(reload))
+    xml_map.save('xml_map.html')
+    print("Saved maps")
+    # Execute the following code once then never again
+    if opn:
+        webbrowser.open('json_map.html')
+        webbrowser.open('xml_map.html')
+        opn = False
+    time.sleep(10)
